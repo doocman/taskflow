@@ -2,6 +2,11 @@
 
 #include <atomic>
 #include <chrono>
+#include <type_traits>
+
+#if __has_include(<bit>)
+#include <bit>
+#endif
 
 namespace tf {
 
@@ -71,11 +76,11 @@ constexpr bool is_pow2(const T& x) {
  * @return floor of `log2(n)`
  */
 template <typename T>
+  requires (std::is_unsigned_v<T>)
 constexpr size_t floor_log2(T n) {
-
-   static_assert(std::is_unsigned_v<T>, "log2 only supports unsigned integer types");
-
-#if defined(_MSC_VER)
+#if __cpp_lib_bitops >= 201907L
+  return std::countl_zero(n);
+#elif defined(_MSC_VER)
   unsigned long index;
   if constexpr (sizeof(T) == 8) {
     _BitScanReverse64(&index, n);
@@ -104,12 +109,11 @@ constexpr size_t floor_log2(T n) {
 */
 template <size_t N>
 constexpr size_t static_floor_log2() {
+#if __cpp_lib_bitops >= 201907L
+  return std::countl_zero(N);
+#else
   return (N < 2) ? 0 : 1 + static_floor_log2<N / 2>();
-  //auto log = 0;
-  //while (N >>= 1) {
-  //  ++log;
-  //}
-  //return log;
+#endif
 }
 
 
